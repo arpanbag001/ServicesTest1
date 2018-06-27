@@ -12,7 +12,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 /**
@@ -73,8 +72,11 @@ public class WatcherService extends Service {
 
     void handleNotification() {
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Intent notificationIntentOpenApp = new Intent(this, MainActivity.class);
+        Intent stopSelf = new Intent(this, NotificationActionReceiver.class);
+        stopSelf.setAction(AppConstants.ACTION_STOP_SERVICE);
+        PendingIntent pendingIntentOpenApp = PendingIntent.getActivity(this, 0, notificationIntentOpenApp, 0);
+        PendingIntent pendingIntentStopService = PendingIntent.getBroadcast(this,0,stopSelf,PendingIntent.FLAG_CANCEL_CURRENT);
 
 
         Notification.Builder builder;
@@ -91,7 +93,8 @@ public class WatcherService extends Service {
                 .setContentTitle("Watcher Service")
                 .setContentText("Protecting your device")
                 .setSmallIcon(R.drawable.ic_security_black_24dp)
-                .setContentIntent(pendingIntent)
+                .setContentIntent(pendingIntentOpenApp)
+                .addAction(R.drawable.ic_power,"Stop",pendingIntentStopService)
                 .build();
     }
 }

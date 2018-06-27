@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         button_Start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startWatcherService();
+                ContextCompat.startForegroundService(getApplicationContext(), serviceIntent);
             }
         });
 
@@ -46,34 +46,48 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    void startWatcherService() {
-        //Start service
-        ContextCompat.startForegroundService(this, serviceIntent);
-
-        //Bind service
-        if (serviceConnection == null) {
-            serviceConnection = new ServiceConnection() {
-                @Override
-                public void onServiceConnected(ComponentName name, IBinder service) {
-                    WatcherService.WatcherServiceBinder watcherServiceBinder = (WatcherService.WatcherServiceBinder) service;
-                    watcherService = watcherServiceBinder.getService();
-                    isServiceBound = true;
-                }
-
-                @Override
-                public void onServiceDisconnected(ComponentName name) {
-                    isServiceBound = false;
-                }
-            };
-        }
-        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bindOrUnbindService(true);
     }
 
-    void stopWatcherService() {
-        if (isServiceBound) {
-            unbindService(serviceConnection);
-            isServiceBound = false;
+    @Override
+    protected void onPause() {
+        super.onPause();
+        bindOrUnbindService(false);
+    }
+
+    void bindOrUnbindService(boolean shouldBind) {
+        if (shouldBind != isServiceBound) { //Check whether the to-do-action is already going on
+            if (shouldBind) {
+                //Bind service
+                if (serviceConnection == null) {
+                    serviceConnection = new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            WatcherService.WatcherServiceBinder watcherServiceBinder = (WatcherService.WatcherServiceBinder) service;
+                            watcherService = watcherServiceBinder.getService();
+                            isServiceBound = true;
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+                            isServiceBound = false;
+                        }
+                    };
+                }
+                bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+            } else {
+                unbindService(serviceConnection);
+                isServiceBound = false;
+            }
         }
+    }
+
+
+    void stopWatcherService() {
+        bindOrUnbindService(false);
         stopService(serviceIntent);
     }
 }

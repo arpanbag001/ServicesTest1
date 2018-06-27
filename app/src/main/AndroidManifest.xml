@@ -21,7 +21,9 @@
             android:name=".WatcherService"
             android:exported="false" />
 
-        <activity android:name=".SecondActivity"></activity>
+        <receiver android:name=".NotificationActionReceiver"/>
+
+        <activity android:name=".SecondActivity"/>
     </application>
 
 </manifest>
