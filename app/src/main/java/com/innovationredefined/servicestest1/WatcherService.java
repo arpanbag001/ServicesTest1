@@ -1,11 +1,14 @@
 package com.innovationredefined.servicestest1;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -22,13 +25,20 @@ public class WatcherService extends Service {
     Handler handler = new Handler();
     Notification notification;
 
-    class WatcherServiceBinder extends Binder{
-        public WatcherService getService(){
+    class WatcherServiceBinder extends Binder {
+        public WatcherService getService() {
             return WatcherService.this;
         }
     }
 
     private WatcherServiceBinder watcherServiceBinder = new WatcherServiceBinder();
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Toast.makeText(getApplicationContext(), "onCreate() called", Toast.LENGTH_SHORT).show();
+        handleNotification();
+    }
 
     @Nullable
     @Override
@@ -40,8 +50,7 @@ public class WatcherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(getApplicationContext(), "onStartCommand() called", Toast.LENGTH_SHORT).show();
-        handleNotification();
-        startForeground(1,notification);
+        startForeground(1, notification);
         executeTask();
         return START_STICKY;
     }
@@ -62,14 +71,23 @@ public class WatcherService extends Service {
         }, 5000);
     }
 
-    void handleNotification(){
+    void handleNotification() {
 
-        Intent notificationIntent = new Intent(this,MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        String  NOTIFICATION_CHANNEL_ID = "Watcher Service Notification Channel";
 
-        notification = new NotificationCompat.Builder(this,NOTIFICATION_CHANNEL_ID)
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT < 26) {
+            builder = new Notification.Builder(this);
+        } else {
+            String NOTIFICATION_CHANNEL_ID = "Watcher Service Notification Channel ID";
+            final CharSequence ChannelName = "Watcher Service Notification Channel";
+            ((NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel(NOTIFICATION_CHANNEL_ID, ChannelName, NotificationManager.IMPORTANCE_LOW));
+            builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID);
+        }
+
+        notification = builder
                 .setContentTitle("Watcher Service")
                 .setContentText("Protecting your device")
                 .setSmallIcon(R.drawable.ic_security_black_24dp)
