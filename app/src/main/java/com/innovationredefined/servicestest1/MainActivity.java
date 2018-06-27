@@ -4,7 +4,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.IBinder;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -32,38 +34,46 @@ public class MainActivity extends AppCompatActivity {
         button_Start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Start service
-                startService(serviceIntent);
-
-                //Bind service
-                if (serviceConnection == null) {
-                    serviceConnection = new ServiceConnection() {
-                        @Override
-                        public void onServiceConnected(ComponentName name, IBinder service) {
-                            WatcherService.WatcherServiceBinder watcherServiceBinder = (WatcherService.WatcherServiceBinder) service;
-                            watcherService = watcherServiceBinder.getService();
-                            isServiceBound = true;
-                        }
-
-                        @Override
-                        public void onServiceDisconnected(ComponentName name) {
-                            isServiceBound = false;
-                        }
-                    };
-                }
-                bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+                startWatcherService();
             }
         });
 
         button_Stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isServiceBound) {
-                    unbindService(serviceConnection);
-                    isServiceBound = false;
-                }
-                stopService(serviceIntent);
+                stopWatcherService();
             }
         });
+    }
+
+    void startWatcherService() {
+        //Start service
+        ContextCompat.startForegroundService(this, serviceIntent);
+
+        //Bind service
+        if (serviceConnection == null) {
+            serviceConnection = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    WatcherService.WatcherServiceBinder watcherServiceBinder = (WatcherService.WatcherServiceBinder) service;
+                    watcherService = watcherServiceBinder.getService();
+                    isServiceBound = true;
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    isServiceBound = false;
+                }
+            };
+        }
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    void stopWatcherService() {
+        if (isServiceBound) {
+            unbindService(serviceConnection);
+            isServiceBound = false;
+        }
+        stopService(serviceIntent);
     }
 }

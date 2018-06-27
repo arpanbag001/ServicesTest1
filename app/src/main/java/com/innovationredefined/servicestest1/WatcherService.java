@@ -1,5 +1,7 @@
 package com.innovationredefined.servicestest1;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 /**
@@ -17,6 +20,7 @@ public class WatcherService extends Service {
 
     Context context = this;
     Handler handler = new Handler();
+    Notification notification;
 
     class WatcherServiceBinder extends Binder{
         public WatcherService getService(){
@@ -36,6 +40,8 @@ public class WatcherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(getApplicationContext(), "onStartCommand() called", Toast.LENGTH_SHORT).show();
+        handleNotification();
+        startForeground(1,notification);
         executeTask();
         return START_STICKY;
     }
@@ -51,8 +57,23 @@ public class WatcherService extends Service {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                startActivity(new Intent(context, SecondActivity.class));
+                startActivity(new Intent(context, SecondActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
         }, 5000);
+    }
+
+    void handleNotification(){
+
+        Intent notificationIntent = new Intent(this,MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+
+        String  NOTIFICATION_CHANNEL_ID = "Watcher Service Notification Channel";
+
+        notification = new NotificationCompat.Builder(this,NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("Watcher Service")
+                .setContentText("Protecting your device")
+                .setSmallIcon(R.drawable.ic_security_black_24dp)
+                .setContentIntent(pendingIntent)
+                .build();
     }
 }
